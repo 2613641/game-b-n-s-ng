@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Platformer Survival Shooter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #334155;
+        }
+
+        canvas {
+            background-color: #0f172a;
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* HUD Overlay */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            font-weight: bold;
+            z-index: 5;
+        }
+
+        .hud-card {
+            background: rgba(15, 23, 42, 0.75);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(6px);
+        }
+
+        .hud-title {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hud-value {
+            font-size: 20px;
+            color: #f8fafc;
+        }
+
+        #life-indicator {
+            color: #ef4444;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* Screen Overlays */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .overlay h1 {
+            font-size: 38px;
+            margin-bottom: 10px;
+            color: #ef4444;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+
+        .overlay p {
+            color: #cbd5e1;
+            margin-bottom: 20px;
+            max-width: 80%;
+const scoreVal = document.getElementById('score-val');
+    const levelVal = document.getElementById('level-val');
+    const totalCoinsVal = document.getElementById('total-coins-val');
+    const deathReason = document.getElementById('death-reason');
+
+    // Upgrade buttons & levels
+    const buyDamage = document.getElementById('buy-damage');
+    const buyFireRate = document.getElementById('buy-firerate');
+    const buyJump = document.getElementById('buy-jump');
+    
+    // Upgrades Persistent Data
+    let totalCoins = 0;
+    let upgDamageLvl = 1;
+    let upgFireRateLvl = 1;
+    let upgJumpLvl = 1;
+
+    // Game Core State
+    let isGameRunning = false;
+    let keys = {};
+    let mousePos = { x: 0, y: 0 };
+    let cameraX = 0;
+    let score = 0;
+    let currentLevel = 1;
+    let lastShootTime = 0;
+
+    // Constants
+    const GRAVITY = 0.55;
+
+    // Map Tiles & Platforms
+    let platforms = [];
+    let spikes = [];
+    let coins = [];
+    let enemies = [];
+    let bullets = [];
+    let particles = [];
+    let finishFlag = null;
+
+    // Player Class
+    class Player {
+        constructor() {
+            this.x = 100;
+            this.y = 300;
+            this.width = 28;
+            this.height = 40;
+            this.vx = 0;
+            this.vy = 0;
+            this.speed = 4
+text-align: center;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        /* Shop System */
+        .shop-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .shop-item {
+            background: #1e293b;
+            border: 1px solid #475569;
+            padding: 15px;
+            border-radius: 10px;
+            width: 180px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .shop-item h3 {
+            font-size: 16px;
+            color: #38bdf8;
+            margin-bottom: 5px;
+        }
+
+        .shop-item p {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+
+        .shop-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .shop-btn:hover {
+            background: #059669;
+        }
+
+        .shop-btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .controls-hint {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #64748b;
+            display: flex;
+            gap: 15px;
+        }
+
+        .key {
+            background: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #475569;
+            color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+    
+    <!-- HUD -->
+    <div id="hud">
+        <div class="hud-card">
+            <div class="hud-title">Chế Độ</div>
+            <div class="hud-value" id="life-indicator">⚠️ 1 MẠNG DUY NHẤT</div>
+        </div>
+        <div class="hud-card">
+            <div class="hud-title">Điểm Thưởng</div>
+<div class="hud-value" id="score-val" style="color: #f59e0b;">0 ⭐</div>
+        </div>
+        <div class="hud-card">
+            <div class="hud-title">Tiến Độ</div>
+            <div class="hud-value" id="level-val" style="color: #38bdf8;">Màn 1</div>
+        </div>
+    </div>
+
+    <!-- Start Overlay -->
+    <div id="start-overlay" class="overlay">
+        <h1 style="color: #38bdf8;">2D HARDCORE SHOOTER</h1>
+        <p>Bắn súng đi cảnh kiểu Mario! Bạn chỉ có <b>1 MẠNG DUY NHẤT</b>. Chạm quái hoặc rơi xuống vực sẽ bị <b>THUA NGAY LẬP TỨC</b>!</p>
+        <button class="btn" id="start-btn">BẮT ĐẦU CHƠI</button>
+        <div class="controls-hint">
+            <span><span class="key">A</span><span class="key">D</span> Di chuyển</span>
+            <span><span class="key">W</span> / <span class="key">Space</span> Nhảy</span>
+            <span><span class="key">Chuột</span> Ngắm & Bắn</span>
+        </div>
+    </div>
+
+    <!-- Game Over / Shop Overlay -->
+    <div id="gameover-overlay" class="overlay" style="display: none;">
+        <h1 id="death-reason">BẠN ĐÃ CHẾT!</h1>
+        <p>Thu thập điểm thưởng để nâng cấp chỉ số vĩnh viễn cho lượt chơi tiếp theo.</p>
+        
+        <p style="font-size: 18px; color: #f59e0b; font-weight: bold; margin-bottom: 15px;">
+            Tổng Điểm Thưởng: <span id="total-coins-val">0</span> ⭐
+        </p>
+
+        <!-- Upgrade Shop -->
+        <div class="shop-container">
+            <div class="shop-item">
+                <div>
+                    <h3>Sát Thương</h3>
+                    <p>Cấp: <span id="lvl-damage">1</span></p>
+                </div>
+                <button class="shop-btn" id="buy-damage">Nâng Cấp (50 ⭐)</button>
+            </div>
+            <div class="shop-item">
+                <div>
+                    <h3>Tốc Độ Bắn</h3>
+                    <p>Cấp: <span id="lvl-firerate">1</span></p>
+                </div>
+                <button class="shop-btn" id="buy-firerate">Nâng Cấp (50 ⭐)</button>
+            </div>
+            <div class="shop-item">
+                <div>
+                    <h3>Lực Nhảy</h3>
+                    <p>Cấp: <span id="lvl-jump">1</span></p>
+                </div>
+                <button class="shop-btn" id="buy-jump">Nâng Cấp (50 ⭐)</button>
+            </div>
+        </div>
+
+        <div>
+            <button class="btn" id="restart-btn">CHƠI LẠI TỪ ĐẦU</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI elements
+    const startOverlay = document.getElementById('start-overlay');
+    const gameoverOverlay = document.getElementById('gameover-overlay');
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
